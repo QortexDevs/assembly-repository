@@ -1,0 +1,120 @@
+name: Docker deploy
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set branch name
+        id: set_branch_name
+        run: echo BRANCH_NAME=${GITHUB_REF#refs/heads/} >> $GITHUB_ENV
+
+      - name: Set domain name
+        id: set_domain_name
+        run: echo DOMAIN_NAME="kenguru.stage.qortex.ru" >> $GITHUB_ENV
+
+      - name: echo domain name
+        run: echo ${{ env.DOMAIN_NAME }}
+
+      - name: Set server key
+        id: set_server_key
+        run: echo SERVER_KEY_NAME="STAGING_PRIVATE_KEY" >> $GITHUB_ENV
+
+      - name: echo server key name
+        run: echo ${{ env.SERVER_KEY_NAME }}
+
+      - name: Set env file name
+        id: set_env_file_name
+        run: echo ENV_FILE_NAME="STAGING_ENV_FILE" >> $GITHUB_ENV
+
+      - name: echo env file name
+        run: echo ${{ env.ENV_FILE_NAME }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Build frontend and push
+        id: docker_build_frontend
+        uses: docker/build-push-action@v2
+        with:
+          build-args: |
+            DOMAIN_NAME=${{ env.DOMAIN_NAME }}
+          context: ./%%project-name%%-frontend
+          file: ./%%project-name%%-frontend/Dockerfile
+          push: true
+          tags: "qortex/%%project-name%%-frontend:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=qortex/%%project-name%%-frontend:${{ env.BRANCH_NAME }}
+          cache-to: type=inline
+
+      - name: Build backend and push
+        id: docker_build_backend
+        uses: docker/build-push-action@v2
+        with:
+          context: ./%%project-name%%-backend/app/
+          file: ./%%project-name%%-backend/app/Dockerfile
+          push: true
+          tags: "qortex/%%project-name%%-backend:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=qortex/%%project-name%%-backend:${{ env.BRANCH_NAME }}
+          cache-to: type=inline
+
+      - name: Build webserver and push
+        id: docker_build_webserver
+        uses: docker/build-push-action@v2
+        with:
+          context: ./%%project-name%%-webserver
+          file: ./%%project-name%%-webserver/Dockerfile-staging
+          build-args: |
+            BRANCH_NAME=${{ env.BRANCH_NAME }}
+            DOMAIN_NAME=${{ env.DOMAIN_NAME }}
+          push: true
+          tags: "qortex/%%project-name%%-webserver:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=qortex/%%project-name%%-webserver:${{ env.BRANCH_NAME }}
+          cache-to: type=inline
+
+      - name: Generate env file
+        run: printf "${{ env.ENV_FILE_NAME }}" >> .env
+
+      - name: Copy env file
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.DOMAIN_NAME }}
+          username: ${{ env.DOMAIN_NAME }}
+          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          source: ".env"
+          target: "~/"
+
+      - name: Rename docker-compose-staging.yml to docker-compose.yml
+        run: mv -f docker-compose-staging.yml docker-compose.yml
+
+      - name: Copy docker-compose.yml
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.DOMAIN_NAME }}
+          username: ${{ env.DOMAIN_NAME }}
+          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          source: "docker-compose.yml"
+          target: ~/${{ env.DOMAIN_NAME }}/
+
+      - name: Trigger container update
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.DOMAIN_NAME }}
+          username: ${{ env.DOMAIN_NAME }}
+          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          script: cd ~/${{ env.DOMAIN_NAME }}/ && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose pull && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose up -d
