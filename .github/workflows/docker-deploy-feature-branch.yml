@@ -37,7 +37,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ssh-key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
           submodules: recursive
 
       - name: Set up Docker Buildx
@@ -95,7 +95,7 @@ jobs:
         with:
           host: ${{ env.DOMAIN_NAME }}
           username: ${{ env.DOMAIN_NAME }}
-          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          key: ${{ secrets.DEPLOY_KEY }}
           source: ".env"
           target: "~/"
 
@@ -107,7 +107,7 @@ jobs:
         with:
           host: ${{ env.DOMAIN_NAME }}
           username: ${{ env.DOMAIN_NAME }}
-          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          key: ${{ secrets.DEPLOY_KEY }}
           source: "docker-compose.yml"
           target: ~/${{ env.DOMAIN_NAME }}/
 
@@ -116,5 +116,5 @@ jobs:
         with:
           host: ${{ env.DOMAIN_NAME }}
           username: ${{ env.DOMAIN_NAME }}
-          key: ${{ secrets[env.SERVER_KEY_NAME] }}
+          key: ${{ secrets.DEPLOY_KEY }}
           script: cd ~/${{ env.DOMAIN_NAME }}/ && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose pull && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose up -d
