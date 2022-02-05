@@ -15,7 +15,7 @@ jobs:
 
       - name: Set domain name
         id: set_domain_name
-        run: echo DOMAIN_NAME="constructor.kenguru.pro" >> $GITHUB_ENV
+        run: echo DOMAIN_NAME="%%project_prod_host%%" >> $GITHUB_ENV
 
       - name: echo domain name
         run: echo ${{ env.DOMAIN_NAME }}
