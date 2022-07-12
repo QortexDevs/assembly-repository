@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: %%project-name%%-frontend
+    build: ./%%project-name%%-frontend
+    container_name: %%project-name%%-frontend
+    environment:
+      VITE_JSON_API_BASE_URL: https://tiger.prod.qortex.ru/
+      VITE_APP_API_BASE_URL: https://tiger.prod.qortex.ru
+      #VITE_JSON_API_BASE_URL: http://localhost:3000/
+      #VITE_APP_API_BASE_URL: http://localhost:3000
+      VITE_API_KEY: k9M3ghBpyFU8DszpfnsrVz3ASTsRESYP
+      BASE_URL: /
+    volumes:
+      - ./%%project-name%%-frontend:/app/src
+    ports:
+      - "3000:3000"
+    networks:
+      - %%project-name%%
+    #command: bash -c "while true; do sleep 2; done"
+
+  game:
+    image: %%project-name%%-game
+    build: ./%%project-name%%-game
+    container_name: %%project-name%%-game
+    environment:
+      VITE_JSON_API_BASE_URL: https://tiger.prod.qortex.ru/
+      VITE_APP_API_BASE_URL: https://tiger.prod.qortex.ru
+      #VITE_JSON_API_BASE_URL: http://localhost:3000/
+      #VITE_APP_API_BASE_URL: http://localhost:3000
+      VITE_API_KEY: k9M3ghBpyFU8DszpfnsrVz3ASTsRESYP
+      BASE_URL: /
+    volumes:
+      - ./%%project-name%%-game:/app/src
+    ports:
+      - "3001:3000"
+    networks:
+      - %%project-name%%
+    #command: bash -c "while true; do sleep 2; done"
+
+networks:
+  %%project-name%%:
