@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+
+  webserver:
+    image: cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-webserver:${BRANCH_NAME}
+    container_name: %%project-name%%-webserver
+    restart: unless-stopped
+    ports:
+      - %%project-prod-port%%:80
+    volumes:
+      - %%project-name%%-web-root:/var/www/html
+    environment:
+      - NGINX_HOST=%%project-prod-host%%
+    networks:
+      - %%project-name%%
+
+networks:
+  %%project-name%%:
+
+volumes:
+  %%project-name%%-web-root:
