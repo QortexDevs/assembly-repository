@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   webserver:
-    image: cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-webserver:${BRANCH_NAME}
+    image: ${DOCKER_REGISTRY_HOST}/%%project-name%%-webserver:${BRANCH_NAME}
     container_name: %%project-name%%-webserver
     restart: unless-stopped
     ports:

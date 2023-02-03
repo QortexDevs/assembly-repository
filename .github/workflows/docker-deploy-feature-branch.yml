@@ -35,18 +35,20 @@ jobs:
         run: echo ${{ env.ENV_FILE_NAME }}
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
           submodules: recursive
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: 'v0.9.1'
 
       - name: Login to Docker Registry
         uses: docker/login-action@v2
         with:
-          registry: 'cr.yandex/crpsj5b3ptlrkon40o6n'
+          registry: ${{ secrets.DOCKER_REGISTRY_HOST }}
           username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
@@ -59,33 +61,34 @@ jobs:
           context: ./%%project-name%%-frontend
           file: ./%%project-name%%-frontend/Dockerfile
           push: true
-          tags: "cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-frontend:${{ env.BRANCH_NAME }}"
-          cache-from: type=registry,ref=cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-frontend:${{ env.BRANCH_NAME }}
+          tags: "${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-frontend:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-frontend:${{ env.BRANCH_NAME }}
           cache-to: type=inline
 
       - name: Build backend and push
         id: docker_build_backend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./%%project-name%%-backend/app/
           file: ./%%project-name%%-backend/app/Dockerfile
           push: true
-          tags: "cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-backend:${{ env.BRANCH_NAME }}"
-          cache-from: type=registry,ref=cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-backend:${{ env.BRANCH_NAME }}
+          tags: "${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-backend:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-backend:${{ env.BRANCH_NAME }}
           cache-to: type=inline
 
       - name: Build webserver and push
         id: docker_build_webserver
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./%%project-name%%-webserver
           file: ./%%project-name%%-webserver/Dockerfile-staging
           build-args: |
             BRANCH_NAME=${{ env.BRANCH_NAME }}
             DOMAIN_NAME=${{ env.DOMAIN_NAME }}
+            DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }}
           push: true
-          tags: "cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-webserver:${{ env.BRANCH_NAME }}"
-          cache-from: type=registry,ref=cr.yandex/crpsj5b3ptlrkon40o6n/%%project-name%%-webserver:${{ env.BRANCH_NAME }}
+          tags: "${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-webserver:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-webserver:${{ env.BRANCH_NAME }}
           cache-to: type=inline
 
       - name: Generate env file
@@ -118,4 +121,4 @@ jobs:
           host: ${{ env.DOMAIN_NAME }}
           username: ${{ env.DOMAIN_NAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: cd ~/${{ env.DOMAIN_NAME }}/ && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose pull && BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose up -d
+          script: cd ~/${{ env.DOMAIN_NAME }}/ && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose pull && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose up -d
