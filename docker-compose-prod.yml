@@ -1,15 +1,64 @@
-version: '3.8'
+version: '3.9'
 
 services:
+
+  db:
+    image: postgres:15.3-alpine3.18
+    container_name: %%project-name%%-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes: 
+      - %%project-name%%-database:/var/lib/postgresql/data
+    networks:
+      - %%project-name%%
+
+  backend:
+    image: ${DOCKER_REGISTRY_HOST}/%%project-name%%-backend:${BRANCH_NAME}
+    container_name: %%project-name%%-backend
+    restart: unless-stopped
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=%%project-prod-host%%
+      - DATABASE_URL=DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+
+      - SECRET_KEY=$DJANGO_APP_SECRET_KEY
+      - DJANGO_SETTINGS_MODULE=app.settings
+
+      - API_KEY=$BACKEND_API_KEY
+      - ADMIN_API_KEY=$BACKEND_ADMIN_API_KEY
+      - SENTRY_DSN=$SENTRY_DSN
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python ./manage.py collectstatic --noinput
+        python ./manage.py migrate
+        gunicorn --bind :8000 --workers 4 app.wsgi:application
+    volumes:
+      - %%project-name%%-media:/code/media
+      - %%project-name%%-cache:/cache
+      - %%project-name%%-share:/code/share
+      depends_on:
+        - db
+    networks:
+      - %%project-name%%
 
   webserver:
     image: ${DOCKER_REGISTRY_HOST}/%%project-name%%-webserver:${BRANCH_NAME}
     container_name: %%project-name%%-webserver
     restart: unless-stopped
     ports:
-      - %%project-prod-port%%:80
+      - 80:80
+      - 443:443
     volumes:
+      - %%project-name%%-certbot-etc:/etc/letsencrypt
+      - %%project-name%%-certbot-var:/var/lib/letsencrypt
       - %%project-name%%-web-root:/var/www/html
+      - %%project-name%%-media:/var/www/media
+      - %%project-name%%-share:/var/www/share
     environment:
       - NGINX_HOST=%%project-prod-host%%
     networks:
@@ -20,3 +69,6 @@ networks:
 
 volumes:
   %%project-name%%-web-root:
+  %%project-name%%-media:
+  %%project-name%%-cache:
+  %%project-name%%-share:

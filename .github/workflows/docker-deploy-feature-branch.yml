@@ -42,8 +42,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
-          version: 'v0.9.1'
+        # uncomment in case of buildx failure
+        # with:
+        # version: 'v0.9.1'
 
       - name: Login to Docker Registry
         uses: docker/login-action@v2
@@ -54,7 +55,7 @@ jobs:
 
       - name: Build frontend and push
         id: docker_build_frontend
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           build-args: |
             DOMAIN_NAME=${{ env.DOMAIN_NAME }}
@@ -67,7 +68,7 @@ jobs:
 
       - name: Build backend and push
         id: docker_build_backend
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: ./%%project-name%%-backend/app/
           file: ./%%project-name%%-backend/app/Dockerfile
@@ -78,7 +79,7 @@ jobs:
 
       - name: Build webserver and push
         id: docker_build_webserver
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: ./%%project-name%%-webserver
           file: ./%%project-name%%-webserver/Dockerfile-staging
@@ -121,4 +122,4 @@ jobs:
           host: ${{ env.DOMAIN_NAME }}
           username: ${{ env.DOMAIN_NAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: cd ~/${{ env.DOMAIN_NAME }}/ && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose pull && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker-compose up -d
+          script: cd ~/${{ env.DOMAIN_NAME }}/ && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker compose pull && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker compose up -d
