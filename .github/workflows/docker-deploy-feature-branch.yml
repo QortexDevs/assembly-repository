@@ -92,6 +92,21 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-webserver:${{ env.BRANCH_NAME }}
           cache-to: type=inline
 
+      - name: Build certbot and push
+        id: docker_build_certbot
+        uses: docker/build-push-action@v4
+        with:
+          context: ./%%project-name%%-certbot
+          file: ./%%project-name%%-webserver/Dockerfile-certbot
+          build-args: |
+            BRANCH_NAME=${{ env.BRANCH_NAME }}
+            DOMAIN_NAME=${{ env.DOMAIN_NAME }}
+            DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }}
+          push: true
+          tags: "${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-certbot:${{ env.BRANCH_NAME }}"
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY_HOST }}/%%project-name%%-certbot:${{ env.BRANCH_NAME }}
+          cache-to: type=inline
+
       - name: Generate env file
         run: printf "${{ env.ENV_FILE_NAME }}" >> .env
 

@@ -41,8 +41,8 @@ services:
       - %%project-name%%-media:/code/media
       - %%project-name%%-cache:/cache
       - %%project-name%%-share:/code/share
-      depends_on:
-        - db
+    depends_on:
+      - db
     networks:
       - %%project-name%%
 
@@ -64,10 +64,30 @@ services:
     networks:
       - %%project-name%%
 
+  certbot:
+    image: ${DOCKER_REGISTRY_HOST}/%%project-name%%-certbot:${BRANCH_NAME}
+    container_name: %%project-name%%-certbot
+    restart: 'no'
+    ports:
+      - 80:80
+    volumes:
+      - %%project-name%%-certbot-etc:/etc/letsencrypt
+      - %%project-name%%-certbot-var:/var/lib/letsencrypt
+      - %%project-name%%-web-root:/var/www/html
+      - %%project-name%%-media:/var/www/media
+      - %%project-name%%-share:/var/www/share
+    environment:
+      - NGINX_HOST=%%project-prod-host%%
+    networks:
+      - %%project-name%%
+
+
 networks:
   %%project-name%%:
 
 volumes:
+  %%project-name%%-certbot-etc:
+  %%project-name%%-certbot-var:
   %%project-name%%-web-root:
   %%project-name%%-media:
   %%project-name%%-cache:
