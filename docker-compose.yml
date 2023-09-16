@@ -20,7 +20,7 @@ services:
     environment:
       - DEBUG=True
       - ALLOWED_HOSTS=%%project-prod-host%%
-      - DATABASE_URL=DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 
       - SECRET_KEY=$DJANGO_APP_SECRET_KEY
       - DJANGO_SETTINGS_MODULE=app.settings
