@@ -92,3 +92,4 @@ volumes:
   %%project-name%%-media:
   %%project-name%%-cache:
   %%project-name%%-share:
+  %%project-name%%-database:
