@@ -138,3 +138,20 @@ jobs:
           username: ${{ env.DOMAIN_NAME }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: cd ~/${{ env.DOMAIN_NAME }}/ && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker compose pull && DOCKER_REGISTRY_HOST=${{ secrets.DOCKER_REGISTRY_HOST }} BRANCH_NAME=${{ env.BRANCH_NAME }} docker compose up -d
+
+      - name: Copy update-bundle.sh
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.DOMAIN_NAME }}
+          username: ${{ env.DOMAIN_NAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: 'update-bundle.sh'
+          target: ~/
+
+      - name: Trigger bundles build
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.DOMAIN_NAME }}
+          username: ${{ env.DOMAIN_NAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: sh ~/update-bundle.sh
