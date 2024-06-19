@@ -55,7 +55,7 @@ jobs:
 
       - name: Build frontend and push
         id: docker_build_frontend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             DOMAIN_NAME=${{ env.DOMAIN_NAME }}
@@ -68,7 +68,7 @@ jobs:
 
       - name: Build backend and push
         id: docker_build_backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./%%project-name%%-backend/app/
           file: ./%%project-name%%-backend/app/Dockerfile
@@ -79,7 +79,7 @@ jobs:
 
       - name: Build webserver and push
         id: docker_build_webserver
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./%%project-name%%-webserver
           file: ./%%project-name%%-webserver/Dockerfile-production
